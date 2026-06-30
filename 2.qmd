@@ -34,18 +34,18 @@ df_colunas <- dados_variaveis |>
     !is.na(C009)                     
   ) |>
   mutate(
-    Horas_Habituais = as.numeric(C008),
-    Horas_Efetivas = as.numeric(C009),
-    Grupo_Jornada = case_when(
-      Horas_Habituais < 40 ~ "1. Ate 39h (Curta)",
-      Horas_Habituais >= 40 & Horas_Habituais <= 44 ~ "2. 40h a 44h (Padrao)",
-      Horas_Habituais > 44 ~ "3. Acima de 44h (Extrema)"
+    horas_h = as.numeric(C008),
+    horas_e = as.numeric(C009),
+    grupo_de_horas = case_when(
+      horas_h < 40 ~ "1. Ate 39h (Curta)",
+      horas_h >= 40 & Horas_Habituais <= 44 ~ "2. 40h a 44h (Padrao)",
+      horas_h > 44 ~ "3. Acima de 44h (Extrema)"
     )
   ) |>
   group_by(Grupo_Jornada, C013) |>
-  summarise(Media_Horas_Reais = mean(Horas_Efetivas))
+  summarise(media_horas = mean(Horas_Efetivas))
 
-ggplot(df_colunas, aes(x = Grupo_Jornada, y = Media_Horas_Reais, fill = C013)) +
+ggplot(df_colunas, aes(x = grupo_de_horas, y = media_horas, fill = C013)) +
   geom_col(position = "dodge", width = 0.7) +
   scale_fill_manual(values = c("Sim" = "#2b8cbe", "Não" = "#e34a33")) +
   scale_y_continuous(breaks = seq(0, 45, by = 5)) +
