@@ -1,0 +1,134 @@
+---
+title: "Análise dos dados da PNAD COVID-19"
+subtitle: "Análise exploratória do Mês de Setembro de 2020"
+author: "Josenilson Junior | David Nathan"
+date: "2026-06-29"
+format: 
+  pdf:
+    toc: true
+    number-sections: true
+    geometry: margin=2.5cm
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+library(COVIDIBGE)
+library(tidyverse)
+library(survey)
+
+dadosPNADCOVID19 <- get_covid(year=2020, month=9)
+
+```
+
+```{r}
+
+dados_variaveis <- dadosPNADCOVID19$variables
+
+df_colunas <- dados_variaveis |>
+  filter(
+    C013 == "Sim" | C013 == "Não", 
+    !is.na(C008),                    
+    !is.na(C009)                     
+  ) |>
+  mutate(
+    Horas_Habituais = as.numeric(C008),
+    Horas_Efetivas = as.numeric(C009),
+    Grupo_Jornada = case_when(
+      Horas_Habituais < 40 ~ "1. Ate 39h (Curta)",
+      Horas_Habituais >= 40 & Horas_Habituais <= 44 ~ "2. 40h a 44h (Padrao)",
+      Horas_Habituais > 44 ~ "3. Acima de 44h (Extrema)"
+    )
+  ) |>
+  group_by(Grupo_Jornada, C013) |>
+  summarise(Media_Horas_Reais = mean(Horas_Efetivas))
+
+ggplot(df_colunas, aes(x = Grupo_Jornada, y = Media_Horas_Reais, fill = C013)) +
+  geom_col(position = "dodge", width = 0.7) +
+  scale_fill_manual(values = c("Sim" = "#2b8cbe", "Não" = "#e34a33")) +
+  scale_y_continuous(breaks = seq(0, 45, by = 5)) +
+  labs(
+    title = "Media de horas trabalhadas",
+    subtitle = "Comparacao direta entre Home Office e Trabalho Presencial",
+    x = "Faixa de Jornada",
+    y = "Media de Horas efetivamente trabalhadas",
+    fill = "Em Home Office?"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+## Os dados indicam que nas jornadas inferiores a 44 horas semanais (curta e padrão), os profissionais em regime de Home Office registraram uma carga horária real superior à dos trabalhadores presenciais. Entretanto, essa dinâmica se inverte na faixa de jornada extrema, onde a atividade presencial passa a exigir maior volume de horas efetivas.
+
+```{r}
+
+tabela_pnad <- dadosPNADCOVID19$variables
+
+df_sintomas <- tabela_pnad |>
+  filter(
+    B00111 == "Sim",          
+    B002 == "Sim" | B002 == "Não" 
+  ) |>
+  mutate(
+    B002 = as.character(B002)
+  ) |>
+  group_by(B002) |>
+  summarise(Total_Casos = n())
+
+# 2. Constrói o novo gráfico de barras paralelas
+ggplot(df_sintomas, aes(x = B002, y = Total_Casos, fill = B002)) +
+  geom_col(width = 0.6) + # Cria as barras com largura ajustada
+  # Define as cores específicas (azul para Sim, vermelho para Não)
+  scale_fill_manual(values = c("Sim" = "#2b8cbe", "Não" = "#e34a33")) +
+  # Configura os rótulos e títulos
+  labs(
+    title = "Busca por atendimento medico em sintomaticos",
+    subtitle = "Casos com Perda de Paladar/Olfato (Setembro/2020)",
+    x = "Procurou estabelecimento de saude?",
+    y = "Quantidade de Casos"
+  ) +
+  # Aplica um tema limpo e remove a legenda (pois o eixo X já explica)
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+```{r}
+tabela_pnad <- dadosPNADCOVID19$variables
+
+df_tendencia <- tabela_pnad |>
+  filter(
+    !is.na(A002),                 
+    !is.na(C008),                 
+    C013 == "Sim" | C013 == "Não" 
+  ) |>
+  mutate(
+    A002 = as.numeric(A002),
+    C008 = as.numeric(C008),
+    C013 = as.character(C013)
+  )
+
+ggplot(df_tendencia, aes(x = A002, y = C008, color = C013)) +
+  geom_smooth(method = "gam", size = 1.5, se = FALSE) +
+  scale_color_manual(values = c("Sim" = "#2b8cbe", "Não" = "#e34a33")) +
+  scale_x_continuous(breaks = seq(15, 80, by = 10)) +
+  scale_y_continuous(limits = c(0, 50), breaks = seq(0, 50, by = 10)) +
+  labs(
+    title = "Carga horaria por Idade",
+    subtitle = "Comparacao de horas semanais trabalhadas por faixa etaria (Set/2020)",
+    x = "Idade do Trabalhador",
+    y = "Jornada Efetiva Realizada (Horas/Semana)",
+    color = "Em Home Office?"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", size = 14),
+    panel.grid.minor = element_blank() # Remove linhas secundárias do fundo
+  )
+```
+
+Variáveis Utilizadas no Relatório
+
+A002 (Idade), B00111 (Perda de cheiro ou paladar), B002 (Busca por atendimento médico), C008 (Horas reais trabalhadas), C013 (Trabalho remoto / Home Office).
