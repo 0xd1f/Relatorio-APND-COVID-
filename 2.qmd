@@ -77,10 +77,8 @@ df_sintomas <- tabela_pnad |>
   group_by(B002) |>
   summarise(Total_Casos = n())
 
-# 2. Constrói o novo gráfico de barras paralelas
 ggplot(df_sintomas, aes(x = B002, y = Total_Casos, fill = B002)) +
   geom_col(width = 0.6) + # Cria as barras com largura ajustada
-  # Define as cores específicas (azul para Sim, vermelho para Não)
   scale_fill_manual(values = c("Sim" = "#2b8cbe", "Não" = "#e34a33")) +
   # Configura os rótulos e títulos
   labs(
@@ -89,7 +87,6 @@ ggplot(df_sintomas, aes(x = B002, y = Total_Casos, fill = B002)) +
     x = "Procurou estabelecimento de saude?",
     y = "Quantidade de Casos"
   ) +
-  # Aplica um tema limpo e remove a legenda (pois o eixo X já explica)
   theme_minimal() +
   theme(legend.position = "none")
 ```
