@@ -48,7 +48,7 @@ df_colunas <- dados_variaveis |>
 ggplot(df_colunas, aes(x = grupo_de_horas, y = media_horas, fill = C013)) +
   geom_col(position = "dodge", width = 0.7) +
   scale_fill_manual(values = c("Sim" = "#2b8cbe", "Não" = "#e34a33")) +
-  scale_y_continuous(breaks = seq(0, 45, by = 5)) +
+  scale_y_continuous(breaks = seq(0, 50, by = 10)) +
   labs(
     title = "Media de horas trabalhadas",
     subtitle = "Comparacao direta entre Home Office e Trabalho Presencial",
